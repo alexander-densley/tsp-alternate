@@ -148,6 +148,15 @@ class TSPSolver:
 		
 	def fancy( self,time_allowance=60.0 ):
 		pass
+
+	def makeMatrix(self, cities):
+		returnMatrix = []
+		for city in cities:
+			returnRows = []
+			for innerCity in cities:
+				returnRows.append(city.costTo(innerCity))
+			returnMatrix.append(returnRows)
+		return returnMatrix
 		
 
 
