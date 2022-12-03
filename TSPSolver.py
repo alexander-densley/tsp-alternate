@@ -149,7 +149,7 @@ class TSPSolver:
 	def fancy( self,time_allowance=60.0 ):
 		pass
 
-	def makeMatrix(self, cities):
+	def makeMatrix(self, cities): #ignore this
 		returnMatrix = []
 		for city in cities:
 			returnRows = []
