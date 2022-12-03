@@ -82,7 +82,44 @@ class TSPSolver:
 	'''
 
 	def greedy( self,time_allowance=60.0 ):
-		pass
+		cities = self._scenario.getCities()
+		self.makeMatrix(cities)
+		citiesDict = {index: city for index, city in enumerate(cities)}
+		nCities = len(cities)
+		iterator = 0
+		foundTour = False
+		bssf = None
+		startTime = time.time()
+		while not foundTour and time.time() - startTime < time_allowance and iterator < nCities:
+			startCity = cities[iterator]
+			citiesToVisit = citiesDict.copy()
+			currentCity = startCity
+			potentialRoute = [citiesToVisit.pop(currentCity._index)]
+			while citiesToVisit:
+				closestCity = (None, math.inf)
+				for index in citiesToVisit:
+					city = citiesToVisit.get(index)
+					if currentCity.costTo(city) < closestCity[1]:
+						closestCity = (index, currentCity.costTo(city))
+				currentCity = citiesToVisit.get(closestCity[0])
+				if currentCity is None: break
+				potentialRoute.append(citiesToVisit.pop(currentCity._index))
+
+			if not citiesToVisit:
+				foundTour = True
+				bssf = TSPSolution(potentialRoute)
+			iterator += 1
+		end_time = time.time()
+
+		results = {}
+		results['cost'] = bssf.cost if foundTour else math.inf
+		results['time'] = end_time - startTime
+		results['count'] = iterator
+		results['soln'] = bssf if bssf.cost < math.inf else None
+		results['max'] = None
+		results['total'] = None
+		results['pruned'] = None
+		return results
 	
 	
 	
@@ -111,6 +148,15 @@ class TSPSolver:
 		
 	def fancy( self,time_allowance=60.0 ):
 		pass
+
+	def makeMatrix(self, cities): #ignorethis
+		returnMatrix = []
+		for city in cities:
+			returnRows = []
+			for innerCity in cities:
+				returnRows.append(city.costTo(innerCity))
+			returnMatrix.append(returnRows)
+		return returnMatrix
 		
 
 
