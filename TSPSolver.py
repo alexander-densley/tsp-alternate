@@ -87,13 +87,15 @@ class TSPSolver:
         startTime = time.time()
         #
         while not foundTour and time.time() - startTime < time_allowance and iterator < nCities:
-            # 
+            # copy the list O(n)
             startCity = cities[iterator]
             citiesToVisit = citiesDict.copy()
             currentCity = startCity
             potentialRoute = [citiesToVisit.pop(currentCity._index)]
+            # for each city check for next path to take - O(n^2)
             while citiesToVisit:
                 closestCity = (None, math.inf)
+                # iterate over each city to visit and check if it's the closest - O(n)
                 for index in citiesToVisit:
                     city = citiesToVisit.get(index)
                     if currentCity.costTo(city) < closestCity[1]:
@@ -158,27 +160,15 @@ class TSPSolver:
                 if outGoing[i] < math.inf:
                     cityNode.addOutGoingNode(nodeDict.get(i))
 
-    # iteratively
-    def fancy(self, time_allowance=60.0):
-        # instantiate the distance matrix - O(n^2)
-        nonNodeCities = self._scenario.getCities()
-        ncities = len(nonNodeCities)
-        matrix = self.makeMatrix(nonNodeCities)
-
-
-        # convert scenario cities into city nodes - O(n^2)
-        cities = self.convertCitiesToCityNodes(self._scenario.getCities())
-        self.setOutGoing(cities, matrix)
-        tour = []
-
-        startTime = time.time()
-
+    def getStarterCities(self, cities, failedPairs, tour):
         # make the base tour with city nodes - O(1)
         node1 = None
         node2 = None
         cost = math.inf
         for city in cities:
             for outGoing in city.getOutGoing():
+                if (city, outGoing) in failedPairs:
+                    continue
                 if city.getCity().costTo(outGoing.getCity()) < cost:
                     node1 = city
                     node2 = outGoing
@@ -190,13 +180,39 @@ class TSPSolver:
         node2.setBackwardConnection(node1)
         tour.append(node1)
         tour.append(node2)
+        return node1, node2
+
+
+    # iteratively
+    def fancy(self, time_allowance=60.0):
+        # instantiate the distance matrix - O(n^2)
+        nonNodeCities = self._scenario.getCities()
+        ncities = len(nonNodeCities)
+        matrix = self.makeMatrix(nonNodeCities)
+
+        # convert scenario cities into city nodes - O(n^2)
+        cities = self.convertCitiesToCityNodes(self._scenario.getCities())
+        self.setOutGoing(cities, matrix)
+
+        startTime = time.time()
 
         # until we have a complete tour, find the cheapest city to add to the tour and add it.
         # Complexity is O(n) * (O(n^4 + n)) = O(n^5)
-        count = 0
-        while len(tour) < ncities:
-            cheapestCity, cheapestOrigin = self.findClosestNeighborNotInTour(tour, matrix)
-            self.insertCityIntoTour(cheapestCity, cheapestOrigin, tour)
+        failedPairs = []
+        solutionFound = False
+        while not solutionFound:
+            tour = []
+            failedTour = False
+            startCity1, startCity2 = self.getStarterCities(cities, failedPairs, tour)
+            while not failedTour:
+                cheapestCity, cheapestOrigin, cheapestInsertion = self.findClosestNeighborNotInTour(tour, matrix)
+                if cheapestInsertion == math.inf:
+                    failedPairs.append((startCity1, startCity2))
+                    failedTour = True
+                self.insertCityIntoTour(cheapestCity, cheapestOrigin, tour)
+                if len(tour) == ncities:
+                    solutionFound = True
+                    break
 
         end_time = time.time()
 
@@ -215,8 +231,6 @@ class TSPSolver:
         results['total'] = None
         results['pruned'] = None
         return results
-
-        pass
 
     # given new point, add to tour - O(n)
     def insertCityIntoTour(self, cheapestCity, cheapestOrigin, tour):
@@ -252,7 +266,7 @@ class TSPSolver:
                             cheapestInsertion = distToAdd
                             cheapestCity = validForwardCity
                             cheapestOrigin = city
-        return cheapestCity, cheapestOrigin
+        return cheapestCity, cheapestOrigin, cheapestInsertion
 
     # make 2d matrix of every distance - O(n^2)
     def makeMatrix(self, cities):
