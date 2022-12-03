@@ -148,6 +148,8 @@ class City:
 	def setScenario( self, scenario ):
 		self._scenario = scenario
 
+	def getIndex(self):
+		return self._index
 	''' <summary>
 		How much does it cost to get from this city to the destination?
 		Note that this is an asymmetric cost function.
