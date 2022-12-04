@@ -26,7 +26,7 @@ if __name__ == '__main__':
 	with open('data.csv', 'w') as f:
 		sys.stdout = f
 		print("Current Seed, Problem Size, Fancy Cost, Fancy Time (sec), Greedy Cost, Greedy Time (sec)")
-		for i in range(10, 51, 5):
+		for i in range(10, 201, 10):
 			w.size.setText(str(i))
 			for i in range(NUM_TESTS):
 				# w.size.setText("20") # set size
