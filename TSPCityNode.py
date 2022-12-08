@@ -7,7 +7,7 @@ import itertools
 class TSPCityNode:
     def __init__(self, city):
         self.city: City = city
-        self.outGoingNodes = []
+        self.outGoingNodes = {}
         self.forwardConnection = None
         self.backwardConnection = None
         #TODO: find outgoing and incoming with matrix
@@ -31,7 +31,7 @@ class TSPCityNode:
         self.backwardConnection = connectedNode
 
     def addOutGoingNode(self, node):
-        self.outGoingNodes.append(node)
+        self.outGoingNodes[node] = node
 
     def getOutGoing(self):
         return self.outGoingNodes

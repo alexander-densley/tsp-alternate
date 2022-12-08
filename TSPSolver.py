@@ -342,7 +342,7 @@ class TSPSolver:
                 if outGoing[i] < math.inf:
                     cityNode.addOutGoingNode(nodeDict.get(i))
 
-    def getStarterCities(self, cities, failedPairs, tour):
+    def getStarterCities(self, cities, failedPairs, tour, tourDict):
         # make the base tour with city nodes - O(1)
         node1 = None
         node2 = None
@@ -361,7 +361,9 @@ class TSPSolver:
         node2.setForwardConnection(node1)
         node2.setBackwardConnection(node1)
         tour.append(node1)
+        tourDict.update({node1: node1})
         tour.append(node2)
+        tourDict.update({node2: node2})
         return node1, node2
 
     # iteratively
@@ -384,16 +386,17 @@ class TSPSolver:
         solutionFound = False
         while not solutionFound:
             tour = []
+            tourDict = {}
             failedTour = False
             startCity1, startCity2 = self.getStarterCities(
-                cities, failedPairs, tour)
+                cities, failedPairs, tour, tourDict)
             while not failedTour:
                 cheapestCity, cheapestOrigin, cheapestInsertion = self.findClosestNeighborNotInTour(
-                    tour, matrix)
+                    tour, matrix, tourDict)
                 if cheapestInsertion == math.inf:
                     failedPairs.append((startCity1, startCity2))
                     failedTour = True
-                self.insertCityIntoTour(cheapestCity, cheapestOrigin, tour)
+                self.insertCityIntoTour(cheapestCity, cheapestOrigin, tour, tourDict)
                 if len(tour) == ncities:
                     solutionFound = True
                     break
@@ -417,9 +420,10 @@ class TSPSolver:
         return results
 
     # given new point, add to tour - O(n)
-    def insertCityIntoTour(self, cheapestCity, cheapestOrigin, tour):
+    def insertCityIntoTour(self, cheapestCity, cheapestOrigin, tour, tourDict):
         # insert into tour at location - O(n)
         tour.insert(tour.index(cheapestOrigin) + 1, cheapestCity)
+        tourDict.update({cheapestCity: cheapestCity})
         # setting forward and backward connections - O(1)
         cheapestCity.setForwardConnection(
             cheapestOrigin.getForwardConnection())
@@ -428,8 +432,8 @@ class TSPSolver:
         cheapestOrigin.setForwardConnection(cheapestCity)
         cheapestCity.setBackwardConnection(cheapestOrigin)
 
-    # finds the closest valid neighbor to add that's not in the tour - O(n^4)
-    def findClosestNeighborNotInTour(self, tour, matrix):
+    # finds the closest valid neighbor to add that's not in the tour - O(n^2)
+    def findClosestNeighborNotInTour(self, tour, matrix, tourDict):
         cheapestInsertion = math.inf
         cheapestCity = None
         cheapestOrigin = None
@@ -438,14 +442,14 @@ class TSPSolver:
     # forward connection and if so check if it's the cheapest addition so far. If it's the cheapest overall,
     # return it.
 
-        # loop over each city and do operations O(n) * O(n^3) = O(n^4)
+        # loop over each city and do operations O(n) * O(n) = O(n^2)
         for city in tour:  # not real
-            # loop over every outgoing node - O(n) * O(n^2) = O(n^3)
+            # loop over every outgoing node - O(n) * O(1) = O(n)
             for validForwardCity in city.getOutGoing():
-                # check if city in tour - O(n) * O(n) = O(n^2)
-                if validForwardCity not in tour:
-                    # check if new point connects to forward node then update cheapest stuffs - O(n+1)
-                    if city.forwardConnection in validForwardCity.getOutGoing():
+                # check if city in tour - O(1) * O(1) = O(1)
+                if tourDict.get(validForwardCity) is None:
+                    # check if new point connects to forward node then update cheapest stuffs - O(1)
+                    if validForwardCity.getOutGoing().get(city.forwardConnection) is not None:
                         distToAdd = matrix[city.getIndex()][validForwardCity.getIndex(
                         )] + matrix[validForwardCity.getIndex()][city.getForwardConnection().getIndex()]
                         if distToAdd < cheapestInsertion:
