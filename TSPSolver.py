@@ -381,21 +381,26 @@ class TSPSolver:
         startTime = time.time()
 
         # until we have a complete tour, find the cheapest city to add to the tour and add it.
-        # Complexity is O(n) * (O(n^4 + n)) = O(n^5)
+        # Complexity is O(n^3)
         failedPairs = []
         solutionFound = False
         while not solutionFound:
             tour = []
             tourDict = {}
             failedTour = False
+            # get the first two cities - O(n^2)
             startCity1, startCity2 = self.getStarterCities(
                 cities, failedPairs, tour, tourDict)
+            # while will run n times on successful tour found so o(n) * o(n^2) = o(n^3)
             while not failedTour:
+                # O(n^2)
                 cheapestCity, cheapestOrigin, cheapestInsertion = self.findClosestNeighborNotInTour(
                     tour, matrix, tourDict)
+                # O(1)
                 if cheapestInsertion == math.inf:
                     failedPairs.append((startCity1, startCity2))
                     failedTour = True
+                # O(n)
                 self.insertCityIntoTour(cheapestCity, cheapestOrigin, tour, tourDict)
                 if len(tour) == ncities:
                     solutionFound = True
